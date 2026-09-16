@@ -1,0 +1,14 @@
+/Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/c58413f47f063e6c/out/serde-c58413f47f063e6c.d: /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/4707f66a27291773/out/private.rs
+
+/Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/c58413f47f063e6c/out/libserde-c58413f47f063e6c.rlib: /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/4707f66a27291773/out/private.rs
+
+/Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/c58413f47f063e6c/out/libserde-c58413f47f063e6c.rmeta: /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/4707f66a27291773/out/private.rs
+
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs:
+/Users/mac/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs:
+/Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/4707f66a27291773/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/mac/Downloads/prestocks-lend/programs/prestocks-lend/target/debug/build/serde/4707f66a27291773/out

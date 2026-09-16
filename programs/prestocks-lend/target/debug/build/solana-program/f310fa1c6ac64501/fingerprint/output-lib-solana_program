@@ -1,0 +1,1 @@
+{"$message_type":"unused_extern","lint_level":"force-warn","unused_extern_names":["bincode","blake3","borsh","borsh0_10","bs58","bytemuck","log","num_bigint","num_derive","num_traits","rand","serde","serde_bytes","serde_derive","solana_atomic_u64","solana_sdk_macro","thiserror"]}

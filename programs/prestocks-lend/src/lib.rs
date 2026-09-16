@@ -4,7 +4,7 @@ use anchor_spl::token_interface::{
 };
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("PreStocksLend1111111111111111111111111111111"); // Replace after deploy
+declare_id!("HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp"); // Replace after deploy
 
 // ============================================================
 // CONSTANTS - Conservative defaults

@@ -35,7 +35,7 @@ export const PRESTOCKS = [
 export const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 // Program ID (replace after deploy)
-export const PROGRAM_ID = "PreStocksLend1111111111111111111111111111111";
+export const PROGRAM_ID = "HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp";
 
 export const LTV_BPS = 4500;
 export const LIQ_THRESHOLD_BPS = 5500;

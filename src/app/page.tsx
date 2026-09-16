@@ -1,8 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { PRESTOCKS, LTV_BPS, LIQ_THRESHOLD_BPS } from "@/lib/constants";
-import { formatUsd, formatPercent, cn } from "@/lib/utils";
+import { useEffect, useState, useCallback } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { PRESTOCKS, LTV_BPS, LIQ_THRESHOLD_BPS, PROGRAM_ID } from "@/lib/constants";
+import { formatUsd, formatPercent, cn, shortenAddress } from "@/lib/utils";
+import {
+  buildDepositIx,
+  buildBorrowIx,
+  buildRepayIx,
+  buildWithdrawIx,
+  ensureAtaIx,
+  isProgramDeployed,
+} from "@/lib/program";
 
 type PreStockPrice = {
   symbol: string;
@@ -14,21 +26,18 @@ type PreStockPrice = {
   impliedValuation: number;
 };
 
-type Position = {
-  symbol: string;
-  collateral: number;
-  debt: number;
-  healthFactor: number;
-};
-
 export default function Home() {
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction, connected } = useWallet();
+
   const [prices, setPrices] = useState<PreStockPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
-  const [walletConnected, setWalletConnected] = useState(false);
   const [activeTab, setActiveTab] = useState<"deposit" | "borrow" | "repay" | "withdraw">("deposit");
   const [amount, setAmount] = useState("");
-  const [position, setPosition] = useState<Position | null>(null);
+  const [txPending, setTxPending] = useState(false);
+  const [txStatus, setTxStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch live PreStocks prices
   useEffect(() => {
@@ -40,13 +49,10 @@ export default function Home() {
         try {
           data = JSON.parse(text);
         } catch {
-          console.error("Invalid JSON from /api/prestocks:", text.slice(0, 200));
           throw new Error("Invalid JSON response");
         }
 
         if (!res.ok || data?.error || !Array.isArray(data)) {
-          console.error("API error:", data);
-          // Fallback to empty prices so UI still works
           setPrices(PRESTOCKS.map((p) => ({ ...p, tokenPrice: 0, markPrice: 0, impliedValuation: 0 })));
           return;
         }
@@ -63,15 +69,7 @@ export default function Home() {
         setPrices(mapped);
       } catch (e) {
         console.error("Failed to fetch PreStocks prices", e);
-        // fallback
-        setPrices(
-          PRESTOCKS.map((p) => ({
-            ...p,
-            tokenPrice: 0,
-            markPrice: 0,
-            impliedValuation: 0,
-          }))
-        );
+        setPrices(PRESTOCKS.map((p) => ({ ...p, tokenPrice: 0, markPrice: 0, impliedValuation: 0 })));
       } finally {
         setLoading(false);
       }
@@ -82,23 +80,99 @@ export default function Home() {
   }, []);
 
   const selectedAsset = prices.find((p) => p.symbol === selected);
+  const programReady = isProgramDeployed();
 
-  const handleConnect = () => {
-    // Placeholder – replace with real wallet adapter later
-    setWalletConnected(true);
-    // Demo position
-    setPosition({
-      symbol: "ANTHROPIC",
-      collateral: 2.5,
-      debt: 800,
-      healthFactor: 1.72,
-    });
-  };
+  const handleAction = useCallback(async () => {
+    setError(null);
+    setTxStatus(null);
 
-  const handleAction = () => {
-    if (!amount || !selected) return;
-    alert(`${activeTab.toUpperCase()} ${amount} of ${selected} (demo only – connect real program next)`);
-  };
+    if (!publicKey || !selectedAsset || !amount) {
+      setError("Connect wallet, select market, and enter amount");
+      return;
+    }
+
+    if (!programReady) {
+      setError(
+        "Program not deployed yet. Set a real PROGRAM_ID in src/lib/constants.ts after running `anchor deploy`."
+      );
+      return;
+    }
+
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setError("Enter a valid amount");
+      return;
+    }
+
+    // PreStocks use 9 decimals typically; USDC uses 6
+    const decimals = activeTab === "borrow" || activeTab === "repay" ? 6 : 9;
+    const rawAmount = BigInt(Math.floor(amountNum * 10 ** decimals));
+
+    setTxPending(true);
+    try {
+      const collateralMint = new PublicKey(selectedAsset.mint);
+      const tx = new Transaction();
+
+      if (activeTab === "deposit") {
+        const { ix: ataIx } = ensureAtaIx(
+          collateralMint,
+          publicKey,
+          publicKey,
+          TOKEN_2022_PROGRAM_ID
+        );
+        tx.add(ataIx);
+        tx.add(
+          await buildDepositIx({
+            connection,
+            owner: publicKey,
+            collateralMint,
+            amount: rawAmount,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+        );
+      } else if (activeTab === "borrow") {
+        const { ix: usdcAtaIx } = ensureAtaIx(
+          new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+          publicKey,
+          publicKey
+        );
+        tx.add(usdcAtaIx);
+        tx.add(
+          await buildBorrowIx({
+            owner: publicKey,
+            collateralMint,
+            amount: rawAmount,
+          })
+        );
+      } else if (activeTab === "repay") {
+        tx.add(
+          await buildRepayIx({
+            owner: publicKey,
+            collateralMint,
+            amount: rawAmount,
+          })
+        );
+      } else if (activeTab === "withdraw") {
+        tx.add(
+          await buildWithdrawIx({
+            owner: publicKey,
+            collateralMint,
+            amount: rawAmount,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+        );
+      }
+
+      const sig = await sendTransaction(tx, connection);
+      setTxStatus(`Transaction sent: ${sig.slice(0, 8)}…`);
+      setAmount("");
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message || "Transaction failed");
+    } finally {
+      setTxPending(false);
+    }
+  }, [publicKey, selectedAsset, amount, activeTab, connection, sendTransaction, programReady]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -115,27 +189,32 @@ export default function Home() {
             </div>
           </div>
 
-          <button
-            onClick={handleConnect}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium transition-all",
-              walletConnected
-                ? "bg-[var(--card)] border border-[var(--border)] text-[var(--muted)]"
-                : "bg-emerald-500 hover:bg-emerald-400 text-black"
+          <div className="flex items-center gap-3">
+            {connected && publicKey && (
+              <span className="hidden sm:inline text-xs text-[var(--muted)]">
+                {shortenAddress(publicKey.toBase58())}
+              </span>
             )}
-          >
-            {walletConnected ? "Connected (Demo)" : "Connect Wallet"}
-          </button>
+            <WalletMultiButton className="!bg-emerald-500 !text-black !rounded-full !h-10 !text-sm !font-medium hover:!bg-emerald-400" />
+          </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Program status banner */}
+        {!programReady && (
+          <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            Program ID is still a placeholder. Deploy with <code className="text-amber-100">anchor deploy</code> then
+            update <code className="text-amber-100">PROGRAM_ID</code> in <code className="text-amber-100">src/lib/constants.ts</code>.
+          </div>
+        )}
+
         {/* Hero stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
-            { label: "Total Collateral", value: "$1.24M" },
-            { label: "Total Borrowed", value: "$482K" },
-            { label: "Avg LTV", value: "38%" },
+            { label: "Total Collateral", value: "—" },
+            { label: "Total Borrowed", value: "—" },
+            { label: "Max LTV", value: formatPercent(LTV_BPS) },
             { label: "Markets", value: String(PRESTOCKS.length) },
           ].map((s) => (
             <div
@@ -200,11 +279,7 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-sm text-[var(--muted)]">
                           <span>{formatUsd(asset.tokenPrice)}</span>
-                          <span
-                            className={cn(
-                              premium >= 0 ? "text-emerald-400" : "text-red-400"
-                            )}
-                          >
+                          <span className={cn(premium >= 0 ? "text-emerald-400" : "text-red-400")}>
                             {premium >= 0 ? "+" : ""}
                             {premium.toFixed(1)}% vs mark
                           </span>
@@ -224,7 +299,6 @@ export default function Home() {
           {/* Action panel */}
           <div className="lg:col-span-2">
             <div className="sticky top-24 rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
-              {/* Tabs */}
               <div className="flex border-b border-[var(--border)]">
                 {(["deposit", "borrow", "repay", "withdraw"] as const).map((tab) => (
                   <button
@@ -249,13 +323,8 @@ export default function Home() {
                   </p>
                 ) : (
                   <>
-                    {/* Selected asset */}
                     <div className="flex items-center gap-3">
-                      <img
-                        src={selectedAsset?.logo}
-                        alt=""
-                        className="w-8 h-8 rounded-full"
-                      />
+                      <img src={selectedAsset?.logo} alt="" className="w-8 h-8 rounded-full" />
                       <div>
                         <p className="font-medium">{selectedAsset?.name}</p>
                         <p className="text-xs text-[var(--muted)]">
@@ -264,11 +333,8 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Amount input */}
                     <div>
-                      <label className="text-xs text-[var(--muted)] mb-1.5 block">
-                        Amount
-                      </label>
+                      <label className="text-xs text-[var(--muted)] mb-1.5 block">Amount</label>
                       <div className="relative">
                         <input
                           type="number"
@@ -286,7 +352,6 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Quick stats */}
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-[var(--muted)]">LTV</span>
@@ -298,29 +363,40 @@ export default function Home() {
                       </div>
                       {activeTab === "borrow" && amount && selectedAsset && (
                         <div className="flex justify-between">
-                          <span className="text-[var(--muted)]">Max borrow</span>
+                          <span className="text-[var(--muted)]">Est. max borrow</span>
                           <span>
                             {formatUsd(
-                              (Number(amount) * selectedAsset.tokenPrice * LTV_BPS) /
-                                10000
+                              (Number(amount) * selectedAsset.tokenPrice * LTV_BPS) / 10000
                             )}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* CTA */}
+                    {error && (
+                      <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-sm text-red-300">
+                        {error}
+                      </div>
+                    )}
+                    {txStatus && (
+                      <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-sm text-emerald-300">
+                        {txStatus}
+                      </div>
+                    )}
+
                     <button
                       onClick={handleAction}
-                      disabled={!walletConnected || !amount}
+                      disabled={!connected || !amount || txPending}
                       className={cn(
                         "w-full py-3.5 rounded-xl font-semibold transition-all",
-                        walletConnected && amount
+                        connected && amount && !txPending
                           ? "bg-emerald-500 hover:bg-emerald-400 text-black"
                           : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                       )}
                     >
-                      {!walletConnected
+                      {txPending
+                        ? "Confirm in wallet…"
+                        : !connected
                         ? "Connect Wallet"
                         : !amount
                         ? "Enter amount"
@@ -332,50 +408,13 @@ export default function Home() {
                 )}
               </div>
             </div>
-
-            {/* Position card */}
-            {walletConnected && position && (
-              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-                <h3 className="text-sm font-medium text-[var(--muted)] mb-3">
-                  Your Position
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-[var(--muted)]">Collateral</span>
-                    <span>
-                      {position.collateral} {position.symbol}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--muted)]">Debt</span>
-                    <span>{formatUsd(position.debt)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[var(--muted)]">Health Factor</span>
-                    <span
-                      className={cn(
-                        "font-semibold",
-                        position.healthFactor >= 1.5
-                          ? "text-emerald-400"
-                          : position.healthFactor >= 1.1
-                          ? "text-amber-400"
-                          : "text-red-400"
-                      )}
-                    >
-                      {position.healthFactor.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Footer note */}
         <p className="mt-12 text-center text-xs text-[var(--muted)]">
-          This is a demo UI. Connect the real Anchor program to enable on-chain transactions.
+          Program: <code className="text-zinc-400">{PROGRAM_ID}</code>
           <br />
-          PreStocks prices pulled live from prestocks.com/api/prestocks
+          Live prices via prestocks.com · Solana wallet adapter connected
         </p>
       </main>
     </div>
