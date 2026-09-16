@@ -1,0 +1,20 @@
+[package]
+name = "prestocks-lend"
+version = "0.1.1"
+description = "Isolated lending for PreStocks (Token-2022) on Solana"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "prestocks_lend"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.30.1"
+anchor-spl = { version = "0.30.1", features = ["token_interface"] }
