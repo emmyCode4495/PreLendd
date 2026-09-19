@@ -7,13 +7,13 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-prestocks_lend = "HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp"
+prestocks_lend = "3b8mDbDh8GqDfPFHHi94vJuw7wMfNQ1houuUDHxiez2k"
 
 [programs.devnet]
-prestocks_lend = "HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp"
+prestocks_lend = "3b8mDbDh8GqDfPFHHi94vJuw7wMfNQ1houuUDHxiez2k"
 
 [programs.mainnet]
-prestocks_lend = "HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp"
+prestocks_lend = "3b8mDbDh8GqDfPFHHi94vJuw7wMfNQ1houuUDHxiez2k"
 
 [registry]
 url = "https://api.apr.dev"

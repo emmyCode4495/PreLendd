@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/prestocks_lend.json`.
  */
 export type PrestocksLend = {
-  "address": "HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp",
+  "address": "3b8mDbDh8GqDfPFHHi94vJuw7wMfNQ1houuUDHxiez2k",
   "metadata": {
     "name": "prestocksLend",
     "version": "0.1.1",
@@ -274,7 +274,16 @@ export type PrestocksLend = {
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "tokenProgram"
+          "name": "collateralTokenProgram",
+          "docs": [
+            "Token program for PreStocks (Token-2022)"
+          ]
+        },
+        {
+          "name": "debtTokenProgram",
+          "docs": [
+            "Token program for USDC (classic Token)"
+          ]
         },
         {
           "name": "rent",

@@ -2,9 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
-use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("HHvREmdMB8TXBqADUKGkWAjLhfffBAFY2PgaYQT2DThp"); // Replace after deploy
+declare_id!("3b8mDbDh8GqDfPFHHi94vJuw7wMfNQ1houuUDHxiez2k"); // Replace after deploy
 
 // ============================================================
 // CONSTANTS - Conservative defaults
@@ -758,7 +757,7 @@ pub struct InitializeMarket<'info> {
         payer = authority,
         token::mint = collateral_mint,
         token::authority = market,
-        token::token_program = token_program,
+        token::token_program = collateral_token_program,
     )]
     pub collateral_vault: InterfaceAccount<'info, TokenAccount>,
 
@@ -767,12 +766,15 @@ pub struct InitializeMarket<'info> {
         payer = authority,
         token::mint = debt_mint,
         token::authority = market,
-        token::token_program = token_program,
+        token::token_program = debt_token_program,
     )]
     pub debt_vault: InterfaceAccount<'info, TokenAccount>,
 
     pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
+    /// Token program for PreStocks (Token-2022)
+    pub collateral_token_program: Interface<'info, TokenInterface>,
+    /// Token program for USDC (classic Token)
+    pub debt_token_program: Interface<'info, TokenInterface>,
     pub rent: Sysvar<'info, Rent>,
 }
 
