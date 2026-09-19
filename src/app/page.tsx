@@ -314,13 +314,14 @@ export default function Home() {
       <header className="border-b border-[var(--border)] sticky top-0 z-50 bg-[var(--background)]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-bold text-black text-sm">
-              PL
-            </div>
-            <div>
-              <h1 className="font-semibold tracking-tight">PreStocks Lend</h1>
-              <p className="text-xs text-[var(--muted)]">Devnet · mock collateral</p>
-            </div>
+            <img
+              src="/logo.png"
+              alt="preLendd — Borrow Against Your Pre-IPO Upside"
+              className="h-10 w-auto object-contain"
+            />
+            <span className="hidden sm:inline text-[10px] px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--muted)]">
+              Devnet
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button
